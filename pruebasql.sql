@@ -1,5 +1,4 @@
 -- PRIMERA PARTE
-
 -- 1
 CREATE TABLE Peliculas (
   "id" Integer,
@@ -60,7 +59,6 @@ GROUP BY p.id, nombre
 ORDER BY cantidad_tags DESC;
 
 -- SEGUNDA PARTE
-
 -- 4
 CREATE TABLE Preguntas (
   "id" Integer,
@@ -145,20 +143,37 @@ WHERE respuesta = respuesta_correcta
 GROUP BY nombre
 
 -- 7
-SELECT *
-FROM Preguntas p
-JOIN Respuestas r ON p.id = pregunta_id
-
-SELECT pregunta, COUNT()
-FROM preguntas p
-JOIN Respuestas r ON p.id = pregunta_id
-GROUP BY pregunta
-
-SELECT pregunta, COUNT(usuario_id) AS cantidad_correctas
+-- Contando la cantidad de respuestas correctas con su respectiva pregunta
+SELECT p.id, pregunta, COUNT(usuario_id) AS cantidad_correctas
 FROM Preguntas p
 LEFT JOIN Respuestas r ON p.id = pregunta_id
 WHERE respuesta = respuesta_correcta
-GROUP BY pregunta
+GROUP BY p.id, pregunta
+
+-- Mostrando todas las respuestas con una subconsulta
+SELECT * 
+FROM Preguntas p
+LEFT JOIN 
+	(SELECT p.id, pregunta, COUNT(usuario_id) AS cantidad_correctas
+	FROM Preguntas p
+	LEFT JOIN Respuestas r ON p.id = pregunta_id
+	WHERE respuesta = respuesta_correcta
+	GROUP BY p.id, pregunta) t
+ON p.id = t.id
+
+-- Cambiando los NULL por 0 [SOLUCIÓN]
+SELECT pregunta, COALESCE(SUM, 0) AS cantidad_correctas
+FROM 
+	(SELECT p.pregunta, SUM(cantidad_correctas)
+	FROM Preguntas p
+	LEFT JOIN 
+		(SELECT p.id, pregunta, COUNT(usuario_id) AS cantidad_correctas
+		FROM Preguntas p
+		LEFT JOIN Respuestas r ON p.id = pregunta_id
+		WHERE respuesta = respuesta_correcta
+		GROUP BY p.id, pregunta) t
+	ON p.id = t.id
+	GROUP BY p.pregunta) t
 
 -- 8
 ALTER TABLE Respuestas 
@@ -175,3 +190,16 @@ ALTER TABLE Usuarios ADD CONSTRAINT edadCheck CHECK (edad >= 18);
 
 INSERT INTO Usuarios VALUES (6, 'Pepe', 17);
 
+-- 10
+ALTER TABLE Usuarios ADD email varchar;
+ALTER TABLE Usuarios ADD CONSTRAINT emailUnique UNIQUE(email);
+
+UPDATE Usuarios
+SET email = 'sophie@gmail.com'
+WHERE id = 3;
+
+UPDATE Usuarios
+SET email = 'sophie@gmail.com'
+WHERE id = 4;
+
+SELECT * FROM Usuarios;
